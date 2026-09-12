@@ -1,21 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import { MSG, } from '../constants'
+import { MSG } from '../constants'
 import { buildSearchRecords, landingList } from '../indexmodel'
 import type { IndexResponse, SearchRecord } from '../types'
 import { Favicon } from './favicon'
 import Highlight from './Highlight'
-import { createFzf, search, type IndexFinder, type NarrowState, type RankedRow, } from './search'
+import { keyToAction, moveSelection } from './keys'
+import { createFzf, search, type IndexFinder, type NarrowState, type RankedRow } from './search'
 
 /**
  * The palette. One GET_INDEX per open, then everything lives in RAM.
- * Empty query = frecency landing list; any query = fzf + bounded
- * frecency blend with per-character highlighting (fzf's optimal match
- * positions mapped through titleLen to the title/URL segments).
+ * Keyboard-first (§11): ↓/↑ or Ctrl-n/p moves (stops at the ends,
+ * never wraps), Enter opens in the same tab, Shift/Cmd/Ctrl+Enter opens
+ * a new tab, Esc closes. Hover and keyboard are the same mechanism:
+ * mouseenter just moves the selection.
  */
 export default function App() {
   const inputRef = useRef<HTMLInputElement>(null)
+  const selectedRef = useRef<HTMLDivElement | null>(null)
   const [records, setRecords] = useState<SearchRecord[] | null>(null)
   const [rows, setRows] = useState<RankedRow[]>([])
+  const [selected, setSelected] = useState(0)
   const [query, setQuery] = useState('')
 
   // Search machinery: one Fzf per index load; narrowing state persists
@@ -39,6 +43,7 @@ export default function App() {
         narrowRef.current = { query: '', pool: null }
         setRecords(built)
         setRows(landingList(built, Date.now()).map((record) => ({ record, positions: new Set() })))
+        setSelected(0)
       })
       .catch((err) => {
         console.error('[histfzf] GET_INDEX failed', err)
@@ -50,15 +55,34 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    // Esc closes from ANYWHERE. What "close" means differs per mode.
+    // Selection follows itself on row list changes — and the scroll
+    // follows the selection (block: nearest, never jumps the page).
+    selectedRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [selected, rows])
+
+  useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.preventDefault()
         close()
+        return
+      }
+      const action = keyToAction(e)
+      if (action === null) {
+        return
+      }
+      e.preventDefault()
+      if (action === 'next') {
+        setSelected((cur) => moveSelection(cur, rows.length, +1))
+      } else if (action === 'prev') {
+        setSelected((cur) => moveSelection(cur, rows.length, -1))
+      } else {
+        openAt(action === 'new-tab' ? { newTab: true } : { newTab: false }, selected)
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [rows, selected])
 
   useEffect(() => {
     if (TAKEOVER) {
@@ -100,9 +124,39 @@ export default function App() {
     window.parent.postMessage({ type: MSG.CLOSE }, '*')
   }
 
+  /** Open the selected/row target: same-tab = navigate the current tab;
+   * new-tab = the SW's OPEN_NEW_TAB. The calls differ per mode only in
+   * the transport (iframe relays through content; a takeover page acts
+   * directly). In both cases the palette dismisses itself. */
+  function openAt({ newTab }: { newTab: boolean }, index: number): void {
+    const row = rows[index]
+    if (!row) {
+      return
+    }
+    // Always the rawUrl — the canonical key is lossy (never navigated).
+    const url = row.record.rawUrl
+    if (TAKEOVER) {
+      if (newTab) {
+        chrome.runtime
+          .sendMessage({ type: MSG.OPEN_NEW_TAB, url })
+          .catch((err) => console.error('[histfzf] open new tab failed', err))
+      } else {
+        location.assign(url)
+      }
+      close()
+      return
+    }
+    window.parent.postMessage({ type: MSG.NAVIGATE, url, newTab }, '*')
+    if (newTab) {
+      // The page stays behind a new tab — dismiss the palette too.
+      window.parent.postMessage({ type: MSG.CLOSE }, '*')
+    }
+  }
+
   function onQueryChange(next: string): void {
     const built = records
     setQuery(next)
+    setSelected(0)
     if (built === null || fzfRef.current === null) {
       return
     }
@@ -146,8 +200,15 @@ export default function App() {
                 {query === '' && rows.length > 0 && (
                   <div className="hf-section">FREQUENT</div>
                 )}
-                {rows.map((row) => (
-                  <div className="hf-row" key={row.record.url}>
+                {rows.map((row, index) => (
+                  <div
+                    className={`hf-row${index === selected ? ' hf-row--selected' : ''}`}
+                    key={row.record.url}
+                    ref={index === selected ? selectedRef : undefined}
+                    onMouseEnter={() => setSelected(index)}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => openAt({ newTab: false }, index)}
+                  >
                     <Favicon rawUrl={row.record.rawUrl} />
                     <div className="hf-rowtext">
                       {row.record.title ? (
@@ -190,10 +251,15 @@ export default function App() {
             <span>
               <span className="hf-kbd">esc</span> Close
             </span>
+            <span>
+              <span className="hf-kbd">⏎</span> Open
+            </span>
+            <span>
+              <span className="hf-kbd">⇧⏎</span> New tab
+            </span>
           </div>
         </div>
       </div>
     </div>
   )
-
 }

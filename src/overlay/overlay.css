@@ -194,8 +194,14 @@ body {
   transition: background 0.08s ease;
 }
 
-.hf-row:hover {
+/* Hover parity: hover moves the selection (App mouseenter), so one
+ * class covers BOTH mouse and keyboard. No separate CSS :hover. */
+.hf-row--selected {
   background: rgba(255, 255, 255, 0.09);
+}
+
+.hf-row--selected .hf-row__title {
+  color: #ffffff;
 }
 
 .hf-row__favicon {
