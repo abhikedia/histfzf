@@ -27,6 +27,7 @@ export const IFRAME_ID = 'histfzf-overlay-frame'
 export const MSG = {
   GET_INDEX: 'GET_INDEX',
   OPEN_NEW_TAB: 'OPEN_NEW_TAB',
+  RESTORE_TAB: 'RESTORE_TAB',
   NAVIGATE: 'NAVIGATE',
   CLOSE: 'CLOSE',
   SHOW: 'SHOW',

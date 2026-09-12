@@ -3,6 +3,9 @@ import { MSG } from '../constants'
 
 export default function App() {
   const inputRef = useRef<HTMLInputElement>(null)
+  // Deployment mode: 'mode=tab' = same-tab takeover (option C) — the
+  // palette page IS the tab, no parent iframe exists.
+  const TAKEOVER = new URLSearchParams(location.search).get('mode') === 'tab'
 
   useEffect(() => {
     let cancelled = false
@@ -27,15 +30,34 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    // Esc closes from ANYWHERE inside the iframe — not only while the
-    // input happens to hold focus.
+    // Esc closes from ANYWHERE (not only while the input holds focus).
+    // What "close" means differs per mode — see close() below.
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        window.parent.postMessage({ type: MSG.CLOSE }, '*')
+        close()
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  useEffect(() => {
+    // TAKEOVER focus: tabs.create navigations deliver focus to the
+    // page like ordinary link navigations, but claim it directly as
+    // well (the tabs.create focus race) and whenever the window
+    // regains focus.
+    if (!TAKEOVER) {
+      return
+    }
+    const focusInput = () => {
+      inputRef.current?.focus()
+    }
+    const timers = [0, 60].map((delay) => setTimeout(focusInput, delay))
+    window.addEventListener('focus', focusInput)
+    return () => {
+      timers.forEach(clearTimeout)
+      window.removeEventListener('focus', focusInput)
+    }
   }, [])
 
   useEffect(() => {
@@ -61,7 +83,17 @@ export default function App() {
     return () => window.removeEventListener('message', onMessage)
   }, [])
 
+  // Close means different things per deployment mode:
+  // - iframe (normal pages): relay CLOSE to the content script
+  // - mode=tab (same-tab takeover, option C): ask the SW to restore
+  //   the page this tab was before the palette took it over
   function close() {
+    if (TAKEOVER) {
+      chrome.runtime
+        .sendMessage({ type: MSG.RESTORE_TAB })
+        .catch((err) => console.error('[histfzf] restore failed', err))
+      return
+    }
     window.parent.postMessage({ type: MSG.CLOSE }, '*')
   }
 

@@ -30,6 +30,7 @@ test('constants match the implementation-plan tables', () => {
 
   expect(c.MSG.GET_INDEX).toBe('GET_INDEX')
   expect(c.MSG.OPEN_NEW_TAB).toBe('OPEN_NEW_TAB')
+  expect(c.MSG.RESTORE_TAB).toBe('RESTORE_TAB')
   expect(c.MSG.NAVIGATE).toBe('NAVIGATE')
   expect(c.MSG.CLOSE).toBe('CLOSE')
   expect(c.MSG.SHOW).toBe('SHOW')

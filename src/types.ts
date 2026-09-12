@@ -30,6 +30,13 @@ export interface OpenNewTabMsg {
   url: string
 }
 
+/** Same-tab takeover dismissal (option C): the palette's disposable
+ * tab asks the SW to remove it (Chrome then re-activates the tab that
+ * was just before it). sender.tab identity carries the tab id. */
+export interface RestoreTabMsg {
+  type: typeof MSG.RESTORE_TAB
+}
+
 export interface NavigateMsg {
   type: typeof MSG.NAVIGATE
   url: string
@@ -44,6 +51,6 @@ export interface ShowMsg {
   type: typeof MSG.SHOW
 }
 
-export type SWRequest = GetIndexRequest | OpenNewTabMsg
+export type SWRequest = GetIndexRequest | OpenNewTabMsg | RestoreTabMsg
 
 export type OverlayMessage = NavigateMsg | CloseMsg
