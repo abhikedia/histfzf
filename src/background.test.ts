@@ -207,7 +207,7 @@ test('omnibox: typing triggers one index load per wake session; suggestions flow
     lastVisitTime: 12345,
   })
   // onInputChanged builds the session cache lazily — no pre-priming.
-  let suggestions: Array<{ content: string; description: string }> | undefined
+  let suggestions: Array<{ content: string; description: string; iconUrl?: string }> | undefined
   harness.listeners.onInputChanged[0]('ghpr', (result) => {
     suggestions = result
   })
@@ -216,6 +216,10 @@ test('omnibox: typing triggers one index load per wake session; suggestions flow
   expect(suggestions?.[0].content).toBe('https://github.com/pull-requests')
   expect(suggestions?.[0].description).toBe(
     '<dim>GitHub PRs</dim> <match>https://github.com/pull-requests</match>',
+  )
+  // The row icon rides in the same payload (nodoc omnibox field).
+  expect(suggestions?.[0].iconUrl).toBe(
+    'chrome-extension://test/_favicon/?pageUrl=https%3A%2F%2Fgithub.com%2Fpull-requests&size=16',
   )
 }, 10_000)
 

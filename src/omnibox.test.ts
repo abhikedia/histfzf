@@ -37,6 +37,9 @@ test('toOmniboxEntry: dim title + matched URL markup, rawUrl content', () => {
   expect(entry.description).toBe(
     '<dim>A page title</dim> <match>https://a.com/page?q=1</match>',
   )
+  // Node tests run without the chrome runtime — the guarded icon URL
+  // degrades to undefined there; the wiring suite asserts the real form.
+  expect(entry.iconUrl).toBeUndefined()
 })
 
 test('toOmniboxEntry: empty title → URL is the only line', () => {

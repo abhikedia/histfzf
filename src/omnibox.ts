@@ -17,6 +17,11 @@ export interface OmniboxEntry {
   content: string
   /** Coarse Chrome markup: dimmed title, matched URL. */
   description: string
+  /** Leading-edge row icon (nodoc API field, cast at the suggest
+   * boundary): the same _favicon service the palette uses, at dropdown
+   * size. Without it, Chrome's per-row icon behavior is inconsistent
+   * (icons on some rows, extension-icon fallbacks on others). */
+  iconUrl?: string
 }
 
 /** Chrome parses its omnibox markup — literal `<`/`>`/`&` in page titles
@@ -25,12 +30,25 @@ function escapeMarkup(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
+/** Guarded because the engine is also exercised outside the extension
+ * runtime (unit tests): no chrome namespace → no icon URL. */
+function faviconIconUrl(rawUrl: string): string | undefined {
+  try {
+    return chrome.runtime.getURL(
+      `_favicon/?pageUrl=${encodeURIComponent(rawUrl)}&size=16`,
+    )
+  } catch {
+    return undefined
+  }
+}
+
 export function toOmniboxEntry(record: SearchRecord): OmniboxEntry {
   const url = escapeMarkup(record.rawUrl)
   const title = escapeMarkup(record.title)
   return {
     content: record.rawUrl,
     description: title ? `<dim>${title}</dim> <match>${url}</match>` : `<match>${url}</match>`,
+    iconUrl: faviconIconUrl(record.rawUrl),
   }
 }
 
