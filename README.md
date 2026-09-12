@@ -92,3 +92,7 @@ Deferred (tracked as future work): omnibox keyword entry point, restricted-page 
 ## Tech
 
 TypeScript · React 19 · Vite + CRXJS · [`fzf-for-js`](https://github.com/ajitid/fzf-for-js) (BSD-3) · [`idb`](https://github.com/jakearchibald/idb) · vitest. No remote code, no CDNs, no eval — everything is bundled (Manifest V3 requirement).
+
+## License
+
+[MIT](./LICENSE) © 2026 Abhishek Kedia — free to use, modify, and ship; attribution appreciated but not required beyond the notice.
