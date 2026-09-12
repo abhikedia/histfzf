@@ -37,6 +37,12 @@ export default defineManifest({
       description: 'Toggle the HistFzf palette',
     },
   },
+  // Omnibox keyword: typing `h` + Space in the address bar routes the
+  // rest of the query to the extension — the one entry point that works
+  // everywhere, including Chrome's own privileged pages.
+  omnibox: {
+    keyword: 'h',
+  },
   web_accessible_resources: [
     {
       resources: ['src/overlay/index.html'],

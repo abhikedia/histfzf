@@ -24,6 +24,8 @@ export const TYPED_WEIGHT = 2
 export const RENDER_CAP = 50
 export const FZF_POOL_SIZE = 500
 export const LANDING_SIZE = 10
+// Chrome's address bar shows ~6 rows before truncation.
+export const OMNIBOX_COUNT = 6
 
 export const DAY_MS = 86_400_000
 

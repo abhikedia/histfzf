@@ -3,6 +3,9 @@ import { MSG, SEED_DONE_KEY, SEED_MAX_RESULTS, SEED_WM_KEY } from './constants'
 import * as db from './db'
 import { canonicalize } from './urlcanon'
 import { runSeed, type SeedDeps } from './seed'
+import { buildSearchRecords } from './indexmodel'
+import { buildSuggestions } from './omnibox'
+import type { SearchRecord } from './types'
 import type { IndexResponse } from './types'
 
 const RestrictedPrefixes = ['chrome:', 'chrome-extension:']
@@ -186,4 +189,66 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
   }
   // No async response needed for other messages.
   return false
+})
+
+// ---------------------------------------------------------------------------
+// Omnibox keyword (`h` + Space in the address bar)
+//
+// Reuses the palette pipeline verbatim (indexmodel + fzf + frecency via
+// omnibox.ts). The index cache lives for exactly ONE worker lifetime
+// (module scope, never persisted): built lazily on the first omnibox
+// event of a wake session, lost when the SW dies, rebuilt next session.
+// That is the correct ephemeral shape — disk stays the single source of
+// truth, and a session can never outlive its staleness by more than
+// the minutes a query session lasts.
+// ---------------------------------------------------------------------------
+
+let omniboxSession: SearchRecord[] | null = null
+
+async function omniboxRecords(): Promise<SearchRecord[]> {
+  omniboxSession ??= buildSearchRecords(await db.getAll())
+  return omniboxSession
+}
+
+chrome.omnibox.onInputStarted.addListener(() => {
+  void omniboxRecords().catch((err) => {
+    console.error('[histfzf] omnibox index load failed', err)
+  })
+})
+
+chrome.omnibox.onInputChanged.addListener((text, suggest) => {
+  omniboxRecords()
+    .then((records) => {
+      suggest(buildSuggestions(records, text, Date.now()))
+    })
+    .catch((err) => {
+      console.error('[histfzf] omnibox suggest failed', err)
+      suggest([])
+    })
+})
+
+chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
+  // A suggestion's content is the payload (the rawUrl). Anything that
+  // is not an http(s) URL (e.g. the user typed plain words) is ignored.
+  let url: URL | null = null
+  try {
+    url = new URL(text)
+  } catch {
+    url = null
+  }
+  if (!url || (url.protocol !== 'http:' && url.protocol !== 'https:')) {
+    return
+  }
+  if (disposition === 'newForegroundTab') {
+    await chrome.tabs.create({ url: text, active: true })
+    return
+  }
+  if (disposition === 'newBackgroundTab') {
+    await chrome.tabs.create({ url: text, active: false })
+    return
+  }
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  if (tab?.id != null) {
+    await chrome.tabs.update(tab.id, { url: text })
+  }
 })

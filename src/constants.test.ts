@@ -24,6 +24,7 @@ test('constants match the specification tables', () => {
   expect(c.RENDER_CAP).toBe(50)
   expect(c.FZF_POOL_SIZE).toBe(500)
   expect(c.LANDING_SIZE).toBe(10)
+  expect(c.OMNIBOX_COUNT).toBe(6)
 
   expect(c.DAY_MS).toBe(86_400_000)
 

@@ -16,6 +16,9 @@ export interface ChromeHarness {
     onVisited: Array<(item: unknown) => void>
     onUpdated: Array<(tabId: number, changeInfo: { title?: string }, tab?: { url?: string }) => void>
     onMessage: Array<(req: unknown, sender: unknown, sendResponse: (resp: unknown) => void) => boolean | void>
+    onInputStarted: Array<() => void>
+    onInputChanged: Array<(text: string, suggest: (suggestions: Array<{ content: string; description: string }>) => void) => void>
+    onInputEntered: Array<(text: string, disposition: string) => void>
   }
   /** In-memory chrome.storage.local. */
   store: Map<string, unknown>
@@ -40,6 +43,9 @@ export function installChromeMock(): ChromeHarness {
     onVisited: [] as ChromeHarness['listeners']['onVisited'],
     onUpdated: [] as ChromeHarness['listeners']['onUpdated'],
     onMessage: [] as ChromeHarness['listeners']['onMessage'],
+    onInputStarted: [] as ChromeHarness['listeners']['onInputStarted'],
+    onInputChanged: [] as ChromeHarness['listeners']['onInputChanged'],
+    onInputEntered: [] as ChromeHarness['listeners']['onInputEntered'],
   }
   const store = new Map<string, unknown>()
   const callLog: ChromeHarness['callLog'] = []
@@ -78,6 +84,27 @@ export function installChromeMock(): ChromeHarness {
       onCommand: {
         addListener(cb: ChromeHarness['listeners']['onCommand'][number]) {
           listeners.onCommand.push(cb)
+        },
+      },
+    },
+    omnibox: {
+      onInputStarted: {
+        addListener(cb: () => void) {
+          listeners.onInputStarted.push(cb)
+        },
+      },
+      onInputChanged: {
+        addListener(
+          cb: (text: string, suggest: (suggestions: Array<{ content: string; description: string }>) => void) => void,
+        ) {
+          listeners.onInputChanged.push(cb)
+        },
+      },
+      onInputEntered: {
+        addListener(
+          cb: (text: string, disposition: string) => void,
+        ) {
+          listeners.onInputEntered.push(cb)
         },
       },
     },
@@ -169,6 +196,8 @@ export function installChromeMock(): ChromeHarness {
     reset() {
       callLog.length = 0
       historyQueue.length = 0
+      activeTab.id = 7
+      activeTab.url = 'https://news.example/article'
       tabs.clear()
       tabs.set(activeTab.id, activeTab)
       store.clear()

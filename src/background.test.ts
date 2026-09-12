@@ -192,6 +192,66 @@ test('onMessage: RESTORE_TAB without a sender.tab (iframe/popup mode) does nothi
   expect(harness.callLog.filter((c) => c.kind === 'tabs.remove')).toEqual([])
 })
 
+// -- Omnibox wiring ---------------------------------------------------------
+
+test('omnibox: typing triggers one index load per wake session; suggestions flow', async () => {
+  expect(harness.listeners.onInputStarted).toHaveLength(1)
+  expect(harness.listeners.onInputChanged).toHaveLength(1)
+  expect(harness.listeners.onInputEntered).toHaveLength(1)
+
+  // The suggestions come from the DB (fake-indexeddb), not history.
+  await db.importHistoryItem({
+    url: 'https://github.com/pull-requests',
+    title: 'GitHub PRs',
+    visitCount: 10,
+    lastVisitTime: 12345,
+  })
+  // onInputChanged builds the session cache lazily — no pre-priming.
+  let suggestions: Array<{ content: string; description: string }> | undefined
+  harness.listeners.onInputChanged[0]('ghpr', (result) => {
+    suggestions = result
+  })
+  await flushUntil(() => suggestions !== undefined)
+  expect(suggestions).toHaveLength(1)
+  expect(suggestions?.[0].content).toBe('https://github.com/pull-requests')
+  expect(suggestions?.[0].description).toBe(
+    '<dim>GitHub PRs</dim> <match>https://github.com/pull-requests</match>',
+  )
+}, 10_000)
+
+test('omnibox: currentTab disposition updates the active tab with the rawUrl', async () => {
+  harness.tabs.set(21, { id: 21, url: 'chrome://new-tab' })
+  harness.activeTab.id = 21
+  await harness.listeners.onInputEntered[0](
+    'https://example.com/opened',
+    'currentTab',
+  )
+  const updates = harness.callLog.filter((c) => c.kind === 'tabs.update')
+  expect(updates).toEqual([
+    { kind: 'tabs.update', args: { tabId: 21, url: 'https://example.com/opened' } },
+  ])
+})
+
+test.each([
+  ['newForegroundTab', true],
+  ['newBackgroundTab', false],
+])('omnibox: %s disposition creates a tab with active=%s', async (disposition, active) => {
+  await harness.listeners.onInputEntered[0]('https://example.com/new', disposition)
+  expect(
+    harness.callLog.filter((c) => c.kind === 'tabs.create'),
+  ).toEqual([
+    { kind: 'tabs.create', args: { url: 'https://example.com/new', active } },
+  ])
+})
+
+test('omnibox: non-URL input (typed words without a suggestion) is ignored', async () => {
+  await harness.listeners.onInputEntered[0](
+    'this is just typed text',
+    'currentTab',
+  )
+  expect(harness.callLog).toEqual([])
+})
+
 // -- Seed wiring through the chrome bridge ---------------------------------
 
 function flushUntil(condition: () => boolean, max = 200): Promise<void> {
