@@ -7,8 +7,7 @@ import type { PageRecord, SearchRecord } from './types'
  *
  * Built ONCE per index load (one GET_INDEX message per palette open),
  * never per keystroke:
- *   - Array<SearchRecord>  — the same object references, the scan target
- *   - Map<url, SearchRecord> — source of truth for O(1) lookups
+ *   - Array<SearchRecord> — same object references, the scan target
  * Each record precomputes the search-time work exactly once:
  *   - haystack: the lowercased `title + " " + url` string a fuzzy
  *     matcher scans (precomputing avoids re-concatenating 50k strings
@@ -27,10 +26,6 @@ export function buildSearchRecords(
     titleLen: record.title.length + 1,
     freq: computeFreq(record.visitCount, record.typedCount),
   }))
-}
-
-export function toUrlMap(records: SearchRecord[]): Map<string, SearchRecord> {
-  return new Map(records.map((record) => [record.url, record]))
 }
 
 /**

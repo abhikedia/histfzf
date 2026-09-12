@@ -5,7 +5,7 @@ import { canonicalize } from './urlcanon'
 import { runSeed, type SeedDeps } from './seed'
 import { buildSearchRecords } from './indexmodel'
 import { buildSuggestions } from './omnibox'
-import type { SearchRecord } from './types'
+import { isSWRequest, type SWRequest, type SearchRecord } from './types'
 import type { IndexResponse } from './types'
 
 const RestrictedPrefixes = ['chrome:', 'chrome-extension:']
@@ -159,8 +159,14 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
   }
 })
 
-chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
-  if (req?.type === MSG.GET_INDEX) {
+chrome.runtime.onMessage.addListener((rawRequest, sender, sendResponse) => {
+  // The type guard narrows to exactly the three SWRequest variants and
+  // drops everything else (hostile senders, malformed payloads).
+  if (!isSWRequest(rawRequest)) {
+    return false
+  }
+  const request: SWRequest = rawRequest
+  if (request.type === MSG.GET_INDEX) {
     db.getAll()
       .then((records) => {
         const response: IndexResponse = { records }
@@ -173,12 +179,13 @@ chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
     // Keep the message channel open for the async sendResponse.
     return true
   }
-  if (req?.type === MSG.OPEN_NEW_TAB) {
-    chrome.tabs.create({ url: req.url }).catch((err) => {
+  if (request.type === MSG.OPEN_NEW_TAB) {
+    chrome.tabs.create({ url: request.url }).catch((err) => {
       console.error('[histfzf] OPEN_NEW_TAB failed', err)
     })
+    return false
   }
-  if (req?.type === MSG.RESTORE_TAB) {
+  if (request.type === MSG.RESTORE_TAB) {
     // Dismiss the disposable takeover tab.
     const tabId = sender.tab?.id
     if (tabId != null) {

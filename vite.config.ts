@@ -7,11 +7,6 @@ import manifest from './manifest.config.js'
 import { name, version } from './package.json'
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@': `${path.resolve(__dirname, 'src')}`,
-    },
-  },
   // Extra HTML pages (the overlay) must be registered as inputs for
   // CRXJS to bundle them and rewrite the WAR paths in the manifest.
   build: {

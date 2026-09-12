@@ -1,7 +1,7 @@
 import { OMNIBOX_COUNT } from './constants'
-import { buildSearchRecords, landingList } from './indexmodel'
+import { landingList } from './indexmodel'
 import { createFzf, search } from './overlay/search'
-import type { PageRecord, SearchRecord } from './types'
+import type { SearchRecord } from './types'
 
 /**
  * The omnibox keyword entry point (Chrome address bar): `h` + Space.
@@ -53,16 +53,17 @@ export function toOmniboxEntry(record: SearchRecord): OmniboxEntry {
 }
 
 /**
- * The suggestion list for one omnibox query:
- *   empty query → the same pure-frecency landing list as the palette
+ * The suggestion list for one omnibox query. Records arrive as the
+ * prebuilt SearchRecord[] (the SW session cache — built once per
+ * worker lifetime, never per keystroke):
+ *   empty query → the same pure-frecency list as the palette
  *   otherwise   → the fzf + bounded frecency blend, cut to OMNIBOX_COUNT
  */
 export function buildSuggestions(
-  pageRecords: PageRecord[],
+  records: SearchRecord[],
   query: string,
   nowMs: number,
 ): OmniboxEntry[] {
-  const records = buildSearchRecords(pageRecords)
   if (query === '') {
     return landingList(records, nowMs, OMNIBOX_COUNT).map(toOmniboxEntry)
   }

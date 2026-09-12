@@ -48,8 +48,7 @@ export function resetSeedRunnerForTests(): void {
   running = false
 }
 
-export async function runSeed(deps: SeedDeps): Promise<void> {
-  if (running) {
+export async function runSeed(deps: SeedDeps): Promise<void> {  if (running) {
     return
   }
   running = true
@@ -96,6 +95,8 @@ export async function runSeed(deps: SeedDeps): Promise<void> {
   }
 }
 
-export function isSeedRunning(): boolean {
+/** Test seam: polls the in-flight mutex from the mutex tests only —
+ * production code has no reader for it (the guidance: never persist). */
+export function isSeedRunningForTests(): boolean {
   return running
 }

@@ -3,7 +3,7 @@ import { IDBFactory } from 'fake-indexeddb'
 import {
   runSeed,
   resetSeedRunnerForTests,
-  isSeedRunning,
+  isSeedRunningForTests,
   type SeedDeps,
 } from './seed'
 import {
@@ -219,9 +219,9 @@ test('in-flight mutex: a second concurrent run is a no-op', async () => {
   const first = runSeed(deps)
   // The second synchronous invocation must not queue another walk.
   await runSeed(deps)
-  expect(isSeedRunning()).toBe(true)
+  expect(isSeedRunningForTests()).toBe(true)
   expect(deps.calls).toHaveLength(1)
   release()
   await first
-  expect(isSeedRunning()).toBe(false)
+  expect(isSeedRunningForTests()).toBe(false)
 })

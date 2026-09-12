@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { MSG } from '../constants'
 import { buildSearchRecords, landingList } from '../indexmodel'
-import type { IndexResponse, SearchRecord } from '../types'
+import type {
+  CloseMsg,
+  GetIndexRequest,
+  IndexResponse,
+  NavigateMsg,
+  OpenNewTabMsg,
+  RestoreTabMsg,
+  SearchRecord,
+} from '../types'
 import { Favicon } from './favicon'
 import Highlight from './Highlight'
 import { keyToAction, moveSelection } from './keys'
@@ -33,7 +41,7 @@ export default function App() {
   useEffect(() => {
     let cancelled = false
     chrome.runtime
-      .sendMessage({ type: MSG.GET_INDEX })
+      .sendMessage({ type: MSG.GET_INDEX } satisfies GetIndexRequest)
       .then((res: IndexResponse | undefined) => {
         if (cancelled) {
           return
@@ -117,11 +125,11 @@ export default function App() {
   function close() {
     if (TAKEOVER) {
       chrome.runtime
-        .sendMessage({ type: MSG.RESTORE_TAB })
+        .sendMessage({ type: MSG.RESTORE_TAB } satisfies RestoreTabMsg)
         .catch((err) => console.error('[histfzf] restore failed', err))
       return
     }
-    window.parent.postMessage({ type: MSG.CLOSE }, '*')
+    window.parent.postMessage({ type: MSG.CLOSE } satisfies CloseMsg, '*')
   }
 
   /** Open the selected/row target: same-tab = navigate the current tab;
@@ -140,7 +148,7 @@ export default function App() {
         // The palette tab itself stays; removal on dismiss re-activates
         // whatever tab was just before it.
         chrome.runtime
-          .sendMessage({ type: MSG.OPEN_NEW_TAB, url })
+          .sendMessage({ type: MSG.OPEN_NEW_TAB, url } satisfies OpenNewTabMsg)
           .catch((err) => console.error('[histfzf] open new tab failed', err))
         close()
       } else {
@@ -151,10 +159,13 @@ export default function App() {
       }
       return
     }
-    window.parent.postMessage({ type: MSG.NAVIGATE, url, newTab }, '*')
+    window.parent.postMessage(
+      { type: MSG.NAVIGATE, url, newTab } satisfies NavigateMsg,
+      '*',
+    )
     if (newTab) {
       // The page stays behind a new tab — dismiss the palette too.
-      window.parent.postMessage({ type: MSG.CLOSE }, '*')
+      window.parent.postMessage({ type: MSG.CLOSE } satisfies CloseMsg, '*')
     }
   }
 

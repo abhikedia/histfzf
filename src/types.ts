@@ -54,3 +54,18 @@ export interface ShowMsg {
 export type SWRequest = GetIndexRequest | OpenNewTabMsg | RestoreTabMsg
 
 export type OverlayMessage = NavigateMsg | CloseMsg
+
+/** Type guard for messages arriving at the service worker — the one
+ * place every SWRequest variant is consumed. Anything else (hostile
+ * pages included) narrows to nothing. */
+export function isSWRequest(value: unknown): value is SWRequest {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+  const type = (value as { type?: unknown }).type
+  return (
+    type === MSG.GET_INDEX ||
+    type === MSG.OPEN_NEW_TAB ||
+    type === MSG.RESTORE_TAB
+  )
+}

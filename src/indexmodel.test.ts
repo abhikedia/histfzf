@@ -2,7 +2,6 @@ import { test, expect, beforeEach } from 'vitest'
 import { IDBFactory } from 'fake-indexeddb'
 import {
   buildSearchRecords,
-  toUrlMap,
   landingList,
 } from './indexmodel'
 import type { PageRecord, SearchRecord } from './types'
@@ -50,16 +49,14 @@ test('precomputes freq with the ranking model', () => {
   expect(s.freq).toBe(Math.log(1 + 10 + 2 * 2))
 })
 
-test('references: Map and array share exactly the same record objects', () => {
+test('references: the built array holds one record object per url', () => {
   const records: SearchRecord[] = buildSearchRecords([
     rec({ url: 'https://a.com/x' }),
     rec({ url: 'https://a.com/y' }),
   ])
-  const map = toUrlMap(records)
-  expect(map.get('https://a.com/x')).toBe(records[0])
-  expect(map.get('https://a.com/y')).toBe(records[1])
+  expect(records[0].url).toBe('https://a.com/x')
+  expect(records).toHaveLength(2)
 })
-
 test('landingList ranks pure frecency (unclamped) and stays stable on ties', () => {
   const input = buildSearchRecords([
     rec({ url: 'https://a.com/habit', visitCount: 20, typedCount: 5, lastVisit: NOW - DAY }),
@@ -88,6 +85,5 @@ test('landingList slices to the requested count', () => {
 
 test('empty index → empty structures everywhere', () => {
   expect(buildSearchRecords([])).toEqual([])
-  expect(toUrlMap([]).size).toBe(0)
   expect(landingList([], NOW)).toEqual([])
 })

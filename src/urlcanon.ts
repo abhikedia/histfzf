@@ -48,10 +48,10 @@ export function canonicalize(rawUrl: string): string | null {
   const query = new URLSearchParams(entries).toString()
 
   // Rule 3: trailing slash stripped, except the domain root.
+  // (URL.pathname is always at least "/" on parsed http(s) URLs, so no
+  // empty-path branch exists.)
   let path = url.pathname
-  if (path === '') {
-    path = '/'
-  } else if (path.length > 1 && path.endsWith('/')) {
+  if (path.length > 1 && path.endsWith('/')) {
     path = path.slice(0, -1)
   }
 

@@ -1,5 +1,5 @@
 import { IFRAME_ID, MSG } from './constants'
-import type { OverlayMessage } from './types'
+import type { OpenNewTabMsg, OverlayMessage, ShowMsg } from './types'
 
 // Injected on demand: mounts/toggles the overlay iframe and relays
 // postMessages between the overlay (extension origin) and this page.
@@ -28,18 +28,19 @@ function setOpen(value: boolean): void {
   ;(window as ExtWindow).__histFzfOpen = value
 }
 
-function show(iframe: HTMLIFrameElement, { announce = true }: { announce?: boolean } = {}) {
+function show(iframe: HTMLIFrameElement): void {
   iframe.style.display = 'block'
   // Steer keyboard focus into the iframe chrome itself; the overlay
   // focuses its input on mount/SHOW.
   iframe.focus()
-  if (announce) {
-    try {
-      iframe.contentWindow?.postMessage({ type: MSG.SHOW }, EXTENSION_ORIGIN)
-    } catch {
-      // SHOW is a focus nicety — an origin/target delivery failure must
-      // never break mount/toggle. The overlay also self-focuses.
-    }
+  try {
+    iframe.contentWindow?.postMessage(
+      { type: MSG.SHOW } satisfies ShowMsg,
+      EXTENSION_ORIGIN,
+    )
+  } catch {
+    // SHOW is a focus nicety — an origin/target delivery failure must
+    // never break mount/toggle. The overlay also self-focuses.
   }
 }
 
@@ -123,7 +124,10 @@ function onOverlayMessage(iframe: HTMLIFrameElement) {
     if (msg.type === MSG.NAVIGATE) {
       if (msg.newTab) {
         chrome.runtime
-          .sendMessage({ type: MSG.OPEN_NEW_TAB, url: msg.url })
+          .sendMessage({
+            type: MSG.OPEN_NEW_TAB,
+            url: msg.url,
+          } satisfies OpenNewTabMsg)
           .catch((err) => console.error('[histfzf] open new tab failed', err))
       } else {
         location.assign(msg.url)

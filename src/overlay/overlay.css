@@ -214,11 +214,9 @@ body {
   object-fit: contain;
 }
 
+/* Geometry (28px box, radius, flex-shrink) comes from the base
+ * .hf-row__favicon class; the globe variant only adds layout + color. */
 .hf-row__favicon--globe {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;

@@ -54,12 +54,12 @@ export function search(
   nowMs: number,
 ): SearchResult {
   const lower = query.toLowerCase()
-  const canNarrow =
+  // Narrow inline so TypeScript connects the canNarrow condition with
+  // the pool's non-null access — no casts anywhere.
+  const matched =
     state.pool !== null && state.query.length > 0 && lower.startsWith(state.query)
-
-  const matched = canNarrow
-    ? createFzf(state.pool as readonly SearchRecord[]).find(lower)
-    : fzf.find(lower)
+      ? createFzf(state.pool).find(lower)
+      : fzf.find(lower)
 
   // Blend BEFORE the render cut: frecency must be able to promote
   // anything inside the 500-row pool, or habitual pages would never
