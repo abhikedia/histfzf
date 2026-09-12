@@ -127,7 +127,7 @@ export default function App() {
   /** Open the selected/row target: same-tab = navigate the current tab;
    * new-tab = the SW's OPEN_NEW_TAB. The calls differ per mode only in
    * the transport (iframe relays through content; a takeover page acts
-   * directly). In both cases the palette dismisses itself. */
+   * directly). */
   function openAt({ newTab }: { newTab: boolean }, index: number): void {
     const row = rows[index]
     if (!row) {
@@ -137,13 +137,18 @@ export default function App() {
     const url = row.record.rawUrl
     if (TAKEOVER) {
       if (newTab) {
+        // The palette tab itself stays; removal on dismiss re-activates
+        // whatever tab was just before it.
         chrome.runtime
           .sendMessage({ type: MSG.OPEN_NEW_TAB, url })
           .catch((err) => console.error('[histfzf] open new tab failed', err))
+        close()
       } else {
+        // Same-tab: the tab BECOMES the destination page. Never close()
+        // here — a RESTORE_TAB would remove the very tab the user just
+        // navigated into. The palette dies with this document instead.
         location.assign(url)
       }
-      close()
       return
     }
     window.parent.postMessage({ type: MSG.NAVIGATE, url, newTab }, '*')
