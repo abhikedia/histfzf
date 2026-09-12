@@ -20,9 +20,12 @@ function Globe(): React.ReactElement {
   )
 }
 
-/** Favicon with the globe fallback — one <img> that swaps to a generic
- * globe on error (sites Chrome has no icon for). Errors are cheap and
- * transient; no retries, no caching. */
+/** Favicon with the globe fallback. Chrome's `_favicon` endpoint can
+ * fail two ways for pages its icon database doesn't know: the request
+ * errors, OR it returns a valid-but-empty image (0×0 natural size).
+ * Both collapse to the generic globe — one <img>, no retries, no
+ * caching. Without the naturalWidth check the empty image renders as
+ * an invisible 28px hole (the "icons not visible" failure mode). */
 export function Favicon({ rawUrl }: { rawUrl: string }): React.ReactElement {
   const [failed, setFailed] = useState(false)
   if (failed) {
@@ -33,6 +36,11 @@ export function Favicon({ rawUrl }: { rawUrl: string }): React.ReactElement {
       className="hf-row__favicon"
       src={faviconUrl(rawUrl)}
       onError={() => setFailed(true)}
+      onLoad={(e) => {
+        if ((e.target as HTMLImageElement).naturalWidth === 0) {
+          setFailed(true)
+        }
+      }}
       alt=""
       draggable={false}
     />
