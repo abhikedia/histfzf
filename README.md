@@ -47,6 +47,12 @@ Design highlights:
 - **On-demand injection** — no all-sites content script; `activeTab` + `scripting` inject the palette only when you press the shortcut.
 - **Search lives in RAM** — the palette loads the index once per open, then never touches the database per keystroke.
 
+## Omnibox optional entry (`h` + Space)
+
+Type `h`, Space, then a fuzzy fragment — suggestions live right in the address bar, on **any** tab including `chrome://` pages (where the palette can't inject). Enter opens in the current tab; the new-tab dispositions open a tab. Up to 6 rows, same ranking as the palette.
+
+Known Chrome limitation: row icons in the keyword dropdown render inconsistently (Chrome's renderer decides per state) — the palette is the icon-rich surface.
+
 ## Privacy & permissions
 
 HistFzf is a local, single-user tool. **Nothing ever leaves your machine** — no accounts, no analytics, no network calls.
