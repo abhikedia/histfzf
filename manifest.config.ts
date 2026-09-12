@@ -4,6 +4,8 @@ import pkg from './package.json'
 export default defineManifest({
   manifest_version: 3,
   name: 'histfzf',
+  // ≤132 chars — browsers and the store surface this line.
+  description: 'fzf for your Chrome history — a keyboard-first command palette that keeps your history forever.',
   version: pkg.version,
   icons: {
     16: 'icons/icon16.png',
