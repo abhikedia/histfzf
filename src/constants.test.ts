@@ -1,7 +1,7 @@
 import { test, expect } from 'vitest'
 import * as c from './constants'
 
-test('constants match the implementation-plan tables', () => {
+test('constants match the specification tables', () => {
   expect(c.DB_NAME).toBe('histfzf')
   expect(c.DB_VERSION).toBe(1)
   expect(c.STORE_PAGES).toBe('pages')
@@ -13,6 +13,7 @@ test('constants match the implementation-plan tables', () => {
   expect(c.SEED_WM_KEY).toBe('seedWatermark')
   expect(c.SEED_DONE_KEY).toBe('seedComplete')
   expect(c.SEED_MAX_WINDOWS).toBe(520)
+  expect(c.SEED_EMPTY_STREAK_CAP).toBe(2)
 
   expect(c.W_FRECENCY_FREQ).toBe(1.0)
   expect(c.W_FRECENCY_REC).toBe(1.0)

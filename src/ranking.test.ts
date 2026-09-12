@@ -53,7 +53,7 @@ test('blend: clamp engages — frecency contributes at most (1 + B)', () => {
 })
 
 test('blend: weak match with huge frecency stays weak', () => {
-  // fzf still owns ordering between candidates (the D11 guarantee)
+  // fzf still owns ordering between candidates (the clamp guarantee)
   expect(blend(0.1, 10, 1)).toBeCloseTo(0.2, 10)
 })
 

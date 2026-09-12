@@ -38,7 +38,7 @@ Chrome's address-bar history search is weak: prefix-biased matching, opaque rank
 └──────────────────────────────────────────┘
 ```
 
-Design highlights (full rationale in the design docs):
+Design highlights:
 
 - **Own index, not Chrome's** — an independent IndexedDB copy (`{url, title, counts…}`) we seed once and maintain live, so ranking is ours and history outlives the 90-day eviction.
 - **Authentic fzf** — the real fzf subsequence algorithm (via `fzf-for-js`) scores `title + " " + url`; matched characters are highlighted using the exact byte positions.
@@ -81,11 +81,11 @@ Rebind the shortcut at `chrome://extensions/shortcuts` (default: `Ctrl+Shift+Spa
 
 | Milestone | Scope | State |
 |---|---|---|
-| Foundations | shared types, constants, URL canonicalization, IndexedDB layer | ✅ done, tested |
-| M0 | shortcut → inject → overlay round-trip | 🔨 next |
-| M1 | resumable history seed + live capture | ⏳ |
-| M2 | fzf search + frecency + Raycast-style UI | ⏳ |
-| M3 | polish, icons, UX fidelity pass | ⏳ |
+| Foundations | types, constants, URL canonicalization, IndexedDB storage, frecency ranking | ✅ done, tested |
+| Injection shell | shortcut → inject → overlay round-trip, restricted-page fallback | ✅ done |
+| Indexing | resumable history seed + live capture of counts and titles | ✅ done |
+| Search & UI | fzf search + frecency + Raycast-style palette | 🔨 next |
+| Polish | icons, motion, UX fidelity pass | ⏳ |
 
 Deferred (tracked as future work): omnibox keyword entry point, restricted-page (`chrome://`) fallback, options page, index pruning cap, light mode.
 

@@ -4,9 +4,21 @@ import type { OverlayMessage } from './types'
 // Injected on demand: mounts/toggles the overlay iframe and relays
 // postMessages between the overlay (extension origin) and this page.
 // Computes the extension origin once — message validation depends on it.
-const EXTENSION_ORIGIN = new URL(chrome.runtime.getURL('')).origin
+// Note: in a browser, chrome-extension:// parses as a standard scheme so
+// url.origin is the real origin; Node/jsdom URL implementations return
+// the string "null" for non-special schemes, hence the fallback that
+// derives the origin from the raw URL.
+function extensionOrigin(): string {
+  const raw = chrome.runtime.getURL('')
+  const parsed = new URL(raw)
+  return parsed.origin === 'null' ? raw.replace(/\/$/, '') : parsed.origin
+}
+const EXTENSION_ORIGIN = extensionOrigin()
 
-type ExtWindow = Window & { __histFzfOpen?: boolean }
+type ExtWindow = Window & {
+  __histFzfOpen?: boolean
+  __histFzfRelay?: (event: MessageEvent) => void
+}
 
 function isOpen(): boolean {
   return (window as ExtWindow).__histFzfOpen !== false
@@ -22,7 +34,12 @@ function show(iframe: HTMLIFrameElement, { announce = true }: { announce?: boole
   // focuses its input on mount/SHOW.
   iframe.focus()
   if (announce) {
-    iframe.contentWindow?.postMessage({ type: MSG.SHOW }, EXTENSION_ORIGIN)
+    try {
+      iframe.contentWindow?.postMessage({ type: MSG.SHOW }, EXTENSION_ORIGIN)
+    } catch {
+      // SHOW is a focus nicety — an origin/target delivery failure must
+      // never break mount/toggle. The overlay also self-focuses.
+    }
   }
 }
 
@@ -62,9 +79,13 @@ function main() {
         show(iframe)
       }
     })
-    window.addEventListener('message', onOverlayMessage(iframe))
+    ensureRelay(iframe)
     return
   }
+
+  // survived an extension reload (isolated world reset, iframe kept) —
+  // rebind the relay to the frame that's actually in the DOM.
+  ensureRelay(existing)
 
   if (isOpen()) {
     hide(existing)
@@ -73,6 +94,19 @@ function main() {
     show(existing)
     setOpen(true)
   }
+}
+
+/** One relay per isolated world, bound to the LIVE frame. Re-binding on
+ * every injection covers the extension-reload case: the old world's
+ * listener dies with it, the fresh injection must own the messages. */
+function ensureRelay(iframe: HTMLIFrameElement): void {
+  const extWindow = window as ExtWindow
+  if (extWindow.__histFzfRelay) {
+    window.removeEventListener('message', extWindow.__histFzfRelay as EventListener)
+  }
+  const relay = onOverlayMessage(iframe)
+  window.addEventListener('message', relay)
+  extWindow.__histFzfRelay = relay
 }
 
 function onOverlayMessage(iframe: HTMLIFrameElement) {

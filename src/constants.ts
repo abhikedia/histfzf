@@ -9,6 +9,11 @@ export const SEED_MAX_RESULTS = 10000
 export const SEED_WM_KEY = 'seedWatermark'
 export const SEED_DONE_KEY = 'seedComplete'
 export const SEED_MAX_WINDOWS = 520
+// Consecutive week-windows with zero items before we declare "beginning
+// of history reached". One empty week is not proof — a quiet vacation
+// week would prematurely end the seed; two consecutive empty weeks is
+// the conservative stop signal.
+export const SEED_EMPTY_STREAK_CAP = 2
 
 export const W_FRECENCY_FREQ = 1.0
 export const W_FRECENCY_REC = 1.0

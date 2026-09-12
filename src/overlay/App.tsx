@@ -15,10 +15,11 @@ export default function App() {
         if (cancelled) {
           return
         }
-        // M0: the response proof lives in the call itself — a resolved
-        // promise here IS the D9 round-trip check. Logging every index
-        // load would be console noise; the M2 commits use this record
-        // array directly.
+        // Success IS the round-trip proof itself — an extension-origin
+        // iframe reaching the SW through a message port is the whole
+        // storage-partitioning question answered. Logging every index
+        // load would be console noise; the search commits use the
+        // record array directly.
         void res
       })
       .catch((err) => {

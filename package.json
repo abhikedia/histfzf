@@ -25,6 +25,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "fake-indexeddb": "^6.2.5",
+    "jsdom": "^29.1.1",
     "typescript": "~5.9.3",
     "vite": "^8.0.0",
     "vite-plugin-zip-pack": "^1.2.4",

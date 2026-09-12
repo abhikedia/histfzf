@@ -9,14 +9,14 @@ import {
 import type { PageRecord } from './types'
 
 /**
- * Ranking model (guide §10 / D11): fzf owns WHAT matches, frecency only
+ * Ranking model: fzf owns WHAT matches, frecency only
  * nudges the order among comparable matches. All functions are pure and
  * take `nowMs` explicitly — no Date.now() — so results are testable.
  */
 
 /** Frequency half of frecency, log-compressed so megasites cannot
- * dominate by scale alone. Typed visits (the URL was TYPED) weigh
- * TYPED_WEIGHT× — a probe-proven, free Chrome signal (D2). */
+ * dominate by scale alone. Typed visits (the URL was actually typed)
+ * weigh TYPED_WEIGHT× — Chrome tracks this distinction for free. */
 export function computeFreq(visitCount: number, typedCount: number): number {
   return Math.log(1 + visitCount + TYPED_WEIGHT * typedCount)
 }
@@ -31,7 +31,7 @@ export function computeRec(lastVisitMs: number, nowMs: number): number {
 }
 
 /** The bounded, multiplicative blend. The FRECENCY_CAP clamp is the
- * heart of D11: frecency can at most double a match score — habitual
+ * core guarantee: frecency can at most double a match score — habitual
  * pages float up but can never swamp a clearly better fuzzy match. */
 export function blend(fzfScore: number, freq: number, rec: number): number {
   const frecency = W_FRECENCY_FREQ * freq + W_FRECENCY_REC * rec

@@ -1,5 +1,6 @@
-/* M0 skeleton — full Raycast token sheet lands in commit 12 (§3 of the
- * implementation plan). Only enough here to prove mount/focus/close. */
+/* Palette skeleton — enough to prove mount/focus/close; the complete
+ * token sheet (window, rows, footer, motion) arrives with the full
+ * styling pass. */
 
 /* NOTE: no color-scheme on the root! With a transparent root background,
  * the canvas gets the UA default FOR THE SCHEME — dark scheme would

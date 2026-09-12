@@ -58,8 +58,9 @@ function hostOf(canonicalKey: string): string {
   }
 }
 
-/** Seed merge: Chrome aggregates repeat across seed windows —
- * max counts/latest visit/earliest first-visit win (plan, commit 5). */
+/** Seed merge: Chrome delivers the same URL's aggregate counts across
+ * multiple seed windows — max counts / latest visit / earliest
+ * first-visit win, so overlapping windows never double-count. */
 function mergeInto(
   existing: PageRecord,
   incoming: PageRecord,
@@ -130,7 +131,8 @@ export async function importHistoryItem(
 }
 
 /** Live path: exactly one visit happened at visitTimeMs.
- * Increments (never overwrites) counts; never touches title (D2). */
+ * Increments (never overwrites) counts; never touches the title —
+ * titles arrive only via updateTitle. */
 export async function recordVisit(
   canonKey: string,
   rawUrl: string,
@@ -166,9 +168,9 @@ export async function recordVisit(
   await tx.done
 }
 
-/** Title updates arrive from tabs.onUpdated and fire redundantly (D2).
- * The triple no-op guard (missing record / empty title / unchanged)
- * is the redundant-write protection — background.ts adds nothing. */
+/** Title updates arrive from tabs.onUpdated and fire redundantly when
+ * the page mutates its own <title>. The triple no-op guard (missing
+ * record / empty title / unchanged) makes those repeats free. */
 export async function updateTitle(
   canonKey: string,
   title: string,
