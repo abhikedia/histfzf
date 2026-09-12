@@ -12,6 +12,15 @@ export default defineConfig({
       '@': `${path.resolve(__dirname, 'src')}`,
     },
   },
+  // Extra HTML pages (the overlay) must be registered as inputs for
+  // CRXJS to bundle them and rewrite the WAR paths in the manifest.
+  build: {
+    rollupOptions: {
+      input: {
+        overlay: path.resolve(__dirname, 'src/overlay/index.html'),
+      },
+    },
+  },
   plugins: [
     react(),
     crx({ manifest }),
