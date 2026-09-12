@@ -1,5 +1,6 @@
 import { OMNIBOX_COUNT } from './constants'
 import { landingList } from './indexmodel'
+import { DEFAULT_WEIGHTS, type RankingWeights } from './ranking'
 import { createFzf, search } from './overlay/search'
 import type { SearchRecord } from './types'
 
@@ -63,13 +64,20 @@ export function buildSuggestions(
   records: SearchRecord[],
   query: string,
   nowMs: number,
+  weights: RankingWeights = DEFAULT_WEIGHTS,
 ): OmniboxEntry[] {
   if (query === '') {
-    return landingList(records, nowMs, OMNIBOX_COUNT).map(toOmniboxEntry)
+    return landingList(records, nowMs, OMNIBOX_COUNT, weights).map(toOmniboxEntry)
   }
   // The omnibox is stateless per keystroke: a fresh pass over the full
   // index (no narrowing session), cut to the address-bar row limit.
-  const { rows } = search(createFzf(records), { query: '', pool: null }, query, nowMs)
+  const { rows } = search(
+    createFzf(records),
+    { query: '', pool: null },
+    query,
+    nowMs,
+    weights,
+  )
   // The engine already cut to RENDER_CAP; the address bar shows fewer.
   return rows.slice(0, OMNIBOX_COUNT).map((row) => toOmniboxEntry(row.record))
 }

@@ -5,7 +5,13 @@ import { canonicalize } from './urlcanon'
 import { runSeed, type SeedDeps } from './seed'
 import { buildSearchRecords } from './indexmodel'
 import { buildSuggestions } from './omnibox'
-import { isSWRequest, type SWRequest, type SearchRecord } from './types'
+import { isSWRequest, type SWRequest } from './types'
+import {
+  DEFAULT_SETTINGS,
+  readSettings,
+  type HistFzfSettings,
+} from './settings'
+import type { SearchRecord } from './types'
 import type { IndexResponse } from './types'
 
 const RestrictedPrefixes = ['chrome:', 'chrome-extension:']
@@ -167,14 +173,14 @@ chrome.runtime.onMessage.addListener((rawRequest, sender, sendResponse) => {
   }
   const request: SWRequest = rawRequest
   if (request.type === MSG.GET_INDEX) {
-    db.getAll()
-      .then((records) => {
-        const response: IndexResponse = { records }
+    Promise.all([db.getAll(), readSettings()])
+      .then(([records, settings]) => {
+        const response: IndexResponse = { records, settings }
         sendResponse(response)
       })
       .catch((err) => {
         console.error('[histfzf] GET_INDEX failed', err)
-        sendResponse({ records: [] })
+        sendResponse({ records: [], settings: DEFAULT_SETTINGS })
       })
     // Keep the message channel open for the async sendResponse.
     return true
@@ -210,23 +216,31 @@ chrome.runtime.onMessage.addListener((rawRequest, sender, sendResponse) => {
 // the minutes a query session lasts.
 // ---------------------------------------------------------------------------
 
-let omniboxSession: SearchRecord[] | null = null
+interface OmniboxSession {
+  records: SearchRecord[]
+  weights: HistFzfSettings
+}
 
-async function omniboxRecords(): Promise<SearchRecord[]> {
-  omniboxSession ??= buildSearchRecords(await db.getAll())
+let omniboxSession: OmniboxSession | null = null
+
+async function omniboxBundle(): Promise<OmniboxSession> {
+  omniboxSession ??= {
+    records: buildSearchRecords(await db.getAll()),
+    weights: await readSettings(),
+  }
   return omniboxSession
 }
 
 chrome.omnibox.onInputStarted.addListener(() => {
-  void omniboxRecords().catch((err) => {
+  void omniboxBundle().catch((err) => {
     console.error('[histfzf] omnibox index load failed', err)
   })
 })
 
 chrome.omnibox.onInputChanged.addListener((text, suggest) => {
-  omniboxRecords()
-    .then((records) => {
-      suggest(buildSuggestions(records, text, Date.now()))
+  omniboxBundle()
+    .then(({ records, weights }) => {
+      suggest(buildSuggestions(records, text, Date.now(), weights))
     })
     .catch((err) => {
       console.error('[histfzf] omnibox suggest failed', err)

@@ -150,3 +150,59 @@ test('segmentMatches ignores out-of-segment indices', () => {
   expect(segmentMatches('ab', new Set([-1, 0, 2, 9]), 0)).toEqual(new Set([0]))
   expect(segmentMatches('ab', new Set([1]), 1)).toEqual(new Set([0]))
 })
+
+test('OPTIONS: custom weights genuinely reorder results (the tuners are live)', () => {
+  // Two records with LITERALLY identical haystacks — identical fzf
+  // scores — so ALL ordering delta comes from the frecency blend, which
+  // is exactly what the options sliders change. cap is raised above
+  // both contributions so the clamp never saturates and the knob has
+  // full authority.
+  const freshSmall = rec({
+    url: 'https://example.com/a',
+    title: 'Same page',
+    visitCount: 2,
+    lastVisit: NOW - DAY,
+    haystack: 'same page',
+  })
+  const ancientMega = rec({
+    url: 'https://example.com/b',
+    title: 'Same page',
+    visitCount: 4000,
+    lastVisit: NOW - 400 * DAY,
+    haystack: 'same page',
+  })
+  const local = createFzf([freshSmall, ancientMega])
+
+  // Factory weights (cap raised): the 4000-visit megasite dominates.
+  const factory = search(
+    local,
+    { query: '', pool: null },
+    'same page',
+    NOW,
+    { wf: 1, wr: 1, halflifeDays: 14, cap: 3 },
+  )
+  expect(factory.rows[0].record.url).toBe('https://example.com/b')
+
+  // Kill the frequency weight: popularity stops mattering — the fresh
+  // page takes the top from recency alone.
+  const noFreq = search(
+    local,
+    { query: '', pool: null },
+    'same page',
+    NOW,
+    { wf: 0, wr: 1, halflifeDays: 14, cap: 3 },
+  )
+  expect(noFreq.rows[0].record.url).toBe('https://example.com/a')
+
+  // Kill both weights: frecency contributes NOTHING — the equal fzf
+  // scores tie and the lastVisit tie-break re-installs the fresh page.
+  const none = search(
+    local,
+    { query: '', pool: null },
+    'same page',
+    NOW,
+    { wf: 0, wr: 0, halflifeDays: 14, cap: 3 },
+  )
+  expect(none.rows[0].record.url).toBe('https://example.com/a')
+})
+

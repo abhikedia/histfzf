@@ -1,3 +1,4 @@
+import type { HistFzfSettings } from './settings'
 import { MSG } from './constants'
 
 export interface PageRecord {
@@ -23,6 +24,7 @@ export interface GetIndexRequest {
 
 export interface IndexResponse {
   records: PageRecord[]
+  settings: HistFzfSettings
 }
 
 export interface OpenNewTabMsg {

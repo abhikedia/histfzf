@@ -87,3 +87,26 @@ test('empty index → empty structures everywhere', () => {
   expect(buildSearchRecords([])).toEqual([])
   expect(landingList([], NOW)).toEqual([])
 })
+
+test('OPTIONS: custom weights reorder the landing list', () => {
+  const input = buildSearchRecords([
+    rec({ url: 'https://a.com/ancient', visitCount: 500, lastVisit: NOW - 400 * DAY }),
+    rec({ url: 'https://a.com/fresh', visitCount: 2, lastVisit: NOW - DAY }),
+  ])
+  // Factory weights: the unclamped ancient megasite tops the list.
+  expect(landingList(input, NOW, 2).map((r) => r.url)).toEqual([
+    'https://a.com/ancient',
+    'https://a.com/fresh',
+  ])
+  // Wf = 0: popularity stops mattering; recency alone re-sorts.
+  const byRecency = landingList(input, NOW, 2, {
+    wf: 0,
+    wr: 1,
+    halflifeDays: 14,
+    cap: 1,
+  })
+  expect(byRecency.map((r) => r.url)).toEqual([
+    'https://a.com/fresh',
+    'https://a.com/ancient',
+  ])
+})

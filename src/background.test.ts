@@ -5,6 +5,7 @@ import {
   SEED_MAX_RESULTS,
   SEED_WM_KEY,
 } from './constants'
+import { DEFAULT_SETTINGS } from './settings'
 import { installChromeMock } from './test-harness'
 import { resetForTests } from './db'
 import * as db from './db'
@@ -148,11 +149,16 @@ test('onMessage: GET_INDEX resolves async with the current records', async () =>
     responded = resp
   }) === true
   expect(keepOpen).toBe(true) // the async-response channel must hold open
-  await new Promise((resolve) => setTimeout(resolve, 0))
+  // Two async hops now (db read + settings read) — wait on the RESOLVE
+  // signal with a bounded loop instead of a fixed tick.
+  for (let i = 0; i < 100 && responded === undefined; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  }
   expect(responded).toEqual({
     records: [
       expect.objectContaining({ url: 'https://example.com/a' }),
     ],
+    settings: DEFAULT_SETTINGS, // nothing in storage yet → factory weights
   })
 })
 

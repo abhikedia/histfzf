@@ -1,6 +1,6 @@
 import { Fzf } from 'fzf'
 import { FZF_POOL_SIZE, RENDER_CAP } from '../constants'
-import { blend, computeRec } from '../ranking'
+import { blend, computeRec, DEFAULT_WEIGHTS, type RankingWeights } from '../ranking'
 import type { SearchRecord } from '../types'
 
 /**
@@ -52,6 +52,7 @@ export function search(
   state: NarrowState,
   query: string,
   nowMs: number,
+  weights: RankingWeights = DEFAULT_WEIGHTS,
 ): SearchResult {
   const lower = query.toLowerCase()
   // Narrow inline so TypeScript connects the canNarrow condition with
@@ -67,7 +68,12 @@ export function search(
   const blended = matched
     .map((entry) => ({
       entry,
-      final: blend(entry.score, entry.item.freq, computeRec(entry.item.lastVisit, nowMs)),
+      final: blend(
+        entry.score,
+        entry.item.freq,
+        computeRec(entry.item.lastVisit, nowMs, weights),
+        weights,
+      ),
     }))
     .sort(
       (a, b) =>

@@ -43,6 +43,12 @@ export default defineManifest({
   omnibox: {
     keyword: 'h',
   },
+  // Options page: ranking-weight tuners. Embedded (not open-in-tab) —
+  // opened from chrome://extensions → Details → Extension options.
+  options_ui: {
+    page: 'src/options/index.html',
+    open_in_tab: false,
+  },
   web_accessible_resources: [
     {
       resources: ['src/overlay/index.html'],

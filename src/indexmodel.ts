@@ -1,5 +1,10 @@
 import { LANDING_SIZE } from './constants'
-import { computeFreq, frecencyScore } from './ranking'
+import {
+  computeFreq,
+  frecencyScore,
+  DEFAULT_WEIGHTS,
+  type RankingWeights,
+} from './ranking'
 import type { PageRecord, SearchRecord } from './types'
 
 /**
@@ -37,10 +42,11 @@ export function landingList(
   records: SearchRecord[],
   nowMs: number,
   count: number = LANDING_SIZE,
+  weights: RankingWeights = DEFAULT_WEIGHTS,
 ): SearchRecord[] {
   return [...records]
     .sort(
-      (a, b) => frecencyScore(b, nowMs) - frecencyScore(a, nowMs),
+      (a, b) => frecencyScore(b, nowMs, weights) - frecencyScore(a, nowMs, weights),
     )
     .slice(0, count)
 }
