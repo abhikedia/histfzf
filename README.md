@@ -84,8 +84,8 @@ Rebind the shortcut at `chrome://extensions/shortcuts` (default: `Ctrl+Shift+Spa
 | Foundations | types, constants, URL canonicalization, IndexedDB storage, frecency ranking | ✅ done, tested |
 | Injection shell | shortcut → inject → overlay round-trip, restricted-page fallback | ✅ done |
 | Indexing | resumable history seed + live capture of counts and titles | ✅ done |
-| Search & UI | fzf search + frecency + Raycast-style palette | 🔨 next |
-| Polish | icons, motion, UX fidelity pass | ⏳ |
+| Search & UI | fzf search + frecency + Raycast-style palette | ✅ done |
+| Polish | icons, motion, UX fidelity pass | ✅ done |
 
 Deferred (tracked as future work): omnibox keyword entry point, restricted-page (`chrome://`) fallback, options page, index pruning cap, light mode.
 

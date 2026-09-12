@@ -1,6 +1,8 @@
-/* Palette skeleton — enough to prove mount/focus/close; the complete
- * token sheet (window, rows, footer, motion) arrives with the full
- * styling pass. */
+/* Palette — the polished illustration sheet: 640px frosted panel,
+ * monochrome system-font typography, keycap footer, 0.08s row
+ * transitions, open pop with reduced-motion respect. Matched
+ * characters are the only bold; the accent palette is empty by
+ * design. */
 
 /* NOTE: no color-scheme on the root! With a transparent root background,
  * the canvas gets the UA default FOR THE SCHEME — dark scheme would

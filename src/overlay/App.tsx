@@ -251,12 +251,16 @@ export default function App() {
             <span>
               <span className="hf-kbd">esc</span> Close
             </span>
-            <span>
-              <span className="hf-kbd">⏎</span> Open
-            </span>
-            <span>
-              <span className="hf-kbd">⇧⏎</span> New tab
-            </span>
+            {rows.length > 0 && (
+              <>
+                <span>
+                  <span className="hf-kbd">⏎</span> Open
+                </span>
+                <span>
+                  <span className="hf-kbd">⇧⏎</span> New tab
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -6,7 +6,10 @@ export default defineManifest({
   name: 'histfzf',
   version: pkg.version,
   icons: {
-    48: 'public/logo.png',
+    16: 'icons/icon16.png',
+    32: 'icons/icon32.png',
+    48: 'icons/icon48.png',
+    128: 'icons/icon128.png',
   },
   permissions: [
     'history',
