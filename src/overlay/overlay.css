@@ -1,4 +1,4 @@
-/* Palette — the polished illustration sheet: 640px frosted panel,
+/* Palette — the polished token sheet: 768px frosted panel,
  * monochrome system-font typography, keycap footer, 0.08s row
  * transitions, open pop with reduced-motion respect. Matched
  * characters are the only bold; the accent palette is empty by
@@ -42,16 +42,28 @@ body {
 
 .hf-panel {
   color-scheme: dark;
-  width: 640px;
-  background: rgba(28, 28, 30, 0.9);
+  width: 768px; /* 640 + 20% per the tuning session */
+  /* Black translucent glass with a specular top sheen — the sheen rides
+   * in the same background stack (first layer paints on top), so no
+   * pseudo-element stacking or repaint-order hazards. */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.12),
+      rgba(255, 255, 255, 0.02) 22%,
+      rgba(255, 255, 255, 0) 34%
+    ),
+    rgba(9, 9, 11, 0.72);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  /* Inner top highlight — the "lit edge" Raycast panels have */
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  /* Inner top highlight — the "lit edge" that makes dark glass read
+   * shiny rather than flat; the second ring is a faint full inner glow */
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.7),
     0 8px 16px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   border-radius: 12px;
   overflow: hidden;
   cursor: default;

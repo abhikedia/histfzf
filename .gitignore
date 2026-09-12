@@ -26,3 +26,7 @@ dist-ssr
 
 # Private docs
 private-docs/
+
+# python tooling cache
+tools/__pycache__/
+*.pyc
