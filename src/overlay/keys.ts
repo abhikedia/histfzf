@@ -4,7 +4,7 @@
  * at the ends — never wraps (fzf behavior).
  */
 
-export type PaletteKeyAction = 'open' | 'new-tab' | 'next' | 'prev'
+type PaletteKeyAction = 'open' | 'new-tab' | 'next' | 'prev'
 
 export function keyToAction(event: {
   key: string

@@ -1,11 +1,5 @@
-import {
-  DAY_MS,
-  FRECENCY_CAP,
-  RECENCY_HALFLIFE_DAYS,
-  TYPED_WEIGHT,
-  W_FRECENCY_FREQ,
-  W_FRECENCY_REC,
-} from './constants'
+import { DAY_MS, TYPED_WEIGHT } from './constants'
+import { DEFAULT_SETTINGS, type HistFzfSettings } from './settings'
 import type { PageRecord } from './types'
 
 /**
@@ -18,19 +12,11 @@ import type { PageRecord } from './types'
  * fixed — typed-vs-clicked is a structural distinction, not a mood knob.
  */
 
-export interface RankingWeights {
-  wf: number
-  wr: number
-  halflifeDays: number
-  cap: number
-}
+// The weight knobs ARE the settings keys — one source of truth
+// (settings.ts), no drift between the options page and the ranker.
+export type RankingWeights = HistFzfSettings
 
-export const DEFAULT_WEIGHTS: RankingWeights = {
-  wf: W_FRECENCY_FREQ,
-  wr: W_FRECENCY_REC,
-  halflifeDays: RECENCY_HALFLIFE_DAYS,
-  cap: FRECENCY_CAP,
-}
+export const DEFAULT_WEIGHTS: RankingWeights = DEFAULT_SETTINGS
 
 /** Frequency half of frecency, log-compressed so megasites cannot
  * dominate by scale alone. Typed visits (the URL was actually typed)

@@ -12,7 +12,7 @@ import type { SearchRecord } from './types'
  * markup, ~N rows, no character-level highlighting).
  */
 
-export interface OmniboxEntry {
+interface OmniboxEntry {
   /** The navigable payload for onInputEntered — always the rawUrl, never
    * the lossy canonical key. */
   content: string

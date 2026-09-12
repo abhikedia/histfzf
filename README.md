@@ -18,7 +18,7 @@ Chrome's address-bar history search is weak: prefix-biased matching, opaque rank
 
 | | |
 |---|---|
-| **One shortcut, one palette** | `Ctrl+R` (Mac: physical `Control+R`) opens a centered fuzzy palette over the current tab. Works on tabs that were already open before install. |
+| **One shortcut, one palette** | `Ctrl+Shift+Space` (Mac: physical `Control+R`) opens a centered fuzzy palette over the current tab. Works on tabs that were already open before install. |
 | **Authentic fzf matching** | The genuine fzf subsequence algorithm (via [`fzf-for-js`](https://github.com/ajitid/fzf-for-js)) over `title + URL`, with matched characters bolded at their exact positions. |
 | **Bounded frecency ranking** | `score × (1 + min(Wf·freq + Wr·rec, 1))` — like Raycast/Arc: frequency (log-compressed so megasites can't dominate) and recency (14-day exponential decay) reorder comparable matches, but a habit can never steal the win from a clearly better match. Both weights are tunable in the options page. |
 | **Your history, kept forever** | On install the extension seeds its own IndexedDB copy from your existing Chrome history (backward-walking weekly windows, resumable), then captures every new visit live. Pages Chrome evicted years ago still surface. |
@@ -117,7 +117,7 @@ Design decisions worth reading:
 
 - **Own index, not Chrome's** — an independent record per canonical URL (`{url, title, visitCount, typedCount, …}`) that survives Chrome's 90-day eviction. By *design*, deleting Chrome's history does not delete ours.
 - **One GET per open, RAM after** — the hot path never touches storage: precomputed haystacks, an Fzf built once per open, and incremental query-order narrowing (growing a query re-scans ≤500 rows, not 20k+).
-- **Fake it correctly at 16px** — icons render from SDF-built RGBA masters (`tools/render-icon.py`), so what you see in the toolbar is what's in the vectors, not a white-boxed thumbnail.
+- **True-alpha icon pipeline** — the icon spec lives in `tools/render-icon.py` (SDF-built RGBA with transparent corners, tilting / streak geometry included); the SVG in `icons/` mirrors it for visual reference. Regenerate any size with one command.
 - **No remote code** — MV3 requires it and users deserve it: zero CDN requests, zero eval.
 
 ## Privacy & permissions
@@ -147,7 +147,7 @@ npm run typecheck  # tsc only
 ```
 
 - Tests: **126 unit tests** across 12 files — the storage layer runs against `fake-indexeddb`; separator-level "chrome" behavior is covered through a mock harness; the fuzzy-matching/ordering guarantees are pinned by ordering-flip proofs.
-- Icon pipeline: edit `icons/icon.svg` (or any of the SVG masters), then `python3 tools/render-icon.py` regenerates all four PNG sizes with true-alpha edges.
+- Icon pipeline: the geometry spec lives in `tools/render-icon.py` — edit it (keeping `icons/icon.svg` in sync for preview), then `python3 tools/render-icon.py` regenerates all four PNG sizes with true-alpha edges.
 - Production zip: `release/crx-histfzf-<version>.zip` is packed by every build.
 
 ## Known limitations

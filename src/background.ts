@@ -11,8 +11,7 @@ import {
   readSettings,
   type HistFzfSettings,
 } from './settings'
-import type { SearchRecord } from './types'
-import type { IndexResponse } from './types'
+import type { IndexResponse, SearchRecord } from './types'
 
 const RestrictedPrefixes = ['chrome:', 'chrome-extension:']
 

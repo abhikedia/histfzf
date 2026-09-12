@@ -40,7 +40,7 @@ export interface NarrowState {
   pool: SearchRecord[] | null
 }
 
-export interface SearchResult {
+interface SearchResult {
   rows: RankedRow[]
   /** The full ordered pool from this pass, for the next keystroke's
    * narrowing (callers persist it in a ref). */

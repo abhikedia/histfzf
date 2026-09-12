@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 /** Chrome's MV3 favicon endpoint — served for the tiny `favicon`
  * permission, reachable from our extension-origin page. */
-export function faviconUrl(rawUrl: string): string {
+function faviconUrl(rawUrl: string): string {
   return chrome.runtime.getURL(
     `_favicon/?pageUrl=${encodeURIComponent(rawUrl)}&size=32`,
   )

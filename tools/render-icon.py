@@ -9,7 +9,7 @@ pipeline composited the SVG against opaque white, which put the glyph
 This is the single source of truth for icon pixels; the geometry mirrors
 icons/icon.svg (viewBox 0 0 128 128):
   rect 6,6 116x116 r30, gradient #1d1e22 -> #101114, border white alpha 0.10
-  caret: rounded rect 82,42 16x44 r8, tilted -14deg? no: -18deg about (64,64)
+  caret: rounded rect 82,42 16x44 r8, tilted -18 degrees about (64,64)
   streaks: (34,66)-(60,66) width 6 alpha 0.45 ; (40,78)-(66,78) width 6 alpha 0.25
 
 Usage: python3 tools/render-icon.py   (writes icons/icon{16,32,48,128}.png)
@@ -32,7 +32,7 @@ STREAK = (0x8F, 0x8F, 0x98)
 RECT_CENTER = (64.0, 64.0)
 RECT_HALF = 58.0
 RECT_RADIUS = 30.0
-CARET_CENTER = (90.0, 64.0)   # rect 82..98 x, 42..86 y -> center x=90? no: 82+8=90, y=64
+CARET_CENTER = (90.0, 64.0)   # the caret's axis-aligned center (82..98 × 42..86)
 CARET_HALF = (8.0, 22.0)
 CARET_RADIUS = 8.0
 CARET_ANGLE_DEG = -18.0

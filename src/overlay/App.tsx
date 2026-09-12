@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { MSG } from '../constants'
+import { LANDING_SIZE, MSG } from '../constants'
 import { buildSearchRecords, landingList } from '../indexmodel'
+import { DEFAULT_SETTINGS } from '../settings'
 import type { RankingWeights } from '../ranking'
 import type {
   CloseMsg,
@@ -35,7 +36,7 @@ export default function App() {
   // across keystrokes in refs (search itself stays stateless).
   const fzfRef = useRef<IndexFinder | null>(null)
   const narrowRef = useRef<NarrowState>({ query: '', pool: null })
-  const weightsRef = useRef<RankingWeights>({ wf: 1, wr: 1, halflifeDays: 14, cap: 1 })
+  const weightsRef = useRef<RankingWeights>(DEFAULT_SETTINGS)
 
   // Deployment mode: 'mode=tab' = takeover — the palette page IS the tab.
   const TAKEOVER = new URLSearchParams(location.search).get('mode') === 'tab'
@@ -54,7 +55,7 @@ export default function App() {
         narrowRef.current = { query: '', pool: null }
         setRecords(built)
         setRows(
-          landingList(built, Date.now(), undefined, weightsRef.current).map(
+          landingList(built, Date.now(), LANDING_SIZE, weightsRef.current).map(
             (record) => ({ record, positions: new Set() }),
           ),
         )
@@ -186,7 +187,7 @@ export default function App() {
     if (next === '') {
       narrowRef.current = { query: '', pool: null }
       setRows(
-        landingList(built, Date.now(), undefined, weightsRef.current).map(
+        landingList(built, Date.now(), LANDING_SIZE, weightsRef.current).map(
           (record) => ({ record, positions: new Set() }),
         ),
       )

@@ -26,7 +26,7 @@ import type { HistoryItemRaw } from './db'
  * is the conservative stop signal. SEED_MAX_WINDOWS is the runaway cap.
  */
 
-export interface SeedState {
+interface SeedState {
   done?: boolean
   watermark?: number
 }
