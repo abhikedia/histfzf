@@ -251,6 +251,13 @@ body {
   text-overflow: ellipsis;
 }
 
+/* Matched characters: the only bold text in the UI — full white on
+ * both lines, overriding the dimmed parents. */
+.hf-rows .hf-hl {
+  color: #ffffff;
+  font-weight: 700;
+}
+
 .hf-empty {
   padding: 24px 16px;
   text-align: center;

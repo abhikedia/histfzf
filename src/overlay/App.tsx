@@ -1,19 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
-import { MSG } from '../constants'
+import { MSG, } from '../constants'
 import { buildSearchRecords, landingList } from '../indexmodel'
 import type { IndexResponse, SearchRecord } from '../types'
 import { Favicon } from './favicon'
+import Highlight from './Highlight'
+import { createFzf, search, type IndexFinder, type NarrowState, type RankedRow, } from './search'
 
 /**
- * The palette. Index model: one GET_INDEX per open, then everything
- * lives in RAM — landing list on empty query (search arrives next).
- * Row rendering: favicon + title/URL, with the empty-title fallback
- * (URL becomes primary, no secondary line — a row is never empty).
+ * The palette. One GET_INDEX per open, then everything lives in RAM.
+ * Empty query = frecency landing list; any query = fzf + bounded
+ * frecency blend with per-character highlighting (fzf's optimal match
+ * positions mapped through titleLen to the title/URL segments).
  */
 export default function App() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [records, setRecords] = useState<SearchRecord[] | null>(null)
-  const [rows, setRows] = useState<SearchRecord[]>([])
+  const [rows, setRows] = useState<RankedRow[]>([])
+  const [query, setQuery] = useState('')
+
+  // Search machinery: one Fzf per index load; narrowing state persists
+  // across keystrokes in refs (search itself stays stateless).
+  const fzfRef = useRef<IndexFinder | null>(null)
+  const narrowRef = useRef<NarrowState>({ query: '', pool: null })
+
   // Deployment mode: 'mode=tab' = takeover — the palette page IS the tab.
   const TAKEOVER = new URLSearchParams(location.search).get('mode') === 'tab'
 
@@ -26,9 +35,10 @@ export default function App() {
           return
         }
         const built = buildSearchRecords(res?.records ?? [])
-        // Search arrives in the next commit; empty query = landing list.
+        fzfRef.current = createFzf(built)
+        narrowRef.current = { query: '', pool: null }
         setRecords(built)
-        setRows(landingList(built, Date.now()))
+        setRows(landingList(built, Date.now()).map((record) => ({ record, positions: new Set() })))
       })
       .catch((err) => {
         console.error('[histfzf] GET_INDEX failed', err)
@@ -40,8 +50,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    // Esc closes from ANYWHERE (not only while the input holds focus).
-    // What "close" means differs per mode — see close() below.
+    // Esc closes from ANYWHERE. What "close" means differs per mode.
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         close()
@@ -52,8 +61,6 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    // SHOW → focus the input and select its text (mount + every re-show
-    // after toggle). A forged SHOW is harmless (focus only).
     if (TAKEOVER) {
       return
     }
@@ -71,8 +78,6 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    // TAKEOVER focus: tabs-create navigations deliver focus naturally —
-    // claim it (immediate + next tick) and whenever the window regains it.
     if (!TAKEOVER) {
       return
     }
@@ -93,6 +98,22 @@ export default function App() {
       return
     }
     window.parent.postMessage({ type: MSG.CLOSE }, '*')
+  }
+
+  function onQueryChange(next: string): void {
+    const built = records
+    setQuery(next)
+    if (built === null || fzfRef.current === null) {
+      return
+    }
+    if (next === '') {
+      narrowRef.current = { query: '', pool: null }
+      setRows(landingList(built, Date.now()).map((record) => ({ record, positions: new Set() })))
+      return
+    }
+    const result = search(fzfRef.current, narrowRef.current, next, Date.now())
+    narrowRef.current = { query: next, pool: result.pool }
+    setRows(result.rows)
   }
 
   return (
@@ -116,28 +137,52 @@ export default function App() {
               className="hf-input"
               autoFocus
               placeholder="Search history…"
+              onChange={(e) => onQueryChange(e.target.value)}
             />
           </div>
           <div className="hf-rows">
             {records === null ? null : (
               <>
-                {rows.length > 0 && <div className="hf-section">FREQUENT</div>}
+                {query === '' && rows.length > 0 && (
+                  <div className="hf-section">FREQUENT</div>
+                )}
                 {rows.map((row) => (
-                  <div className="hf-row" key={row.url}>
-                    <Favicon rawUrl={row.rawUrl} />
+                  <div className="hf-row" key={row.record.url}>
+                    <Favicon rawUrl={row.record.rawUrl} />
                     <div className="hf-rowtext">
-                      {row.title ? (
+                      {row.record.title ? (
                         <>
-                          <div className="hf-row__title">{row.title}</div>
-                          <div className="hf-row__url">{row.url}</div>
+                          <div className="hf-row__title">
+                            <Highlight
+                              text={row.record.title}
+                              positions={row.positions}
+                              offset={0}
+                            />
+                          </div>
+                          <div className="hf-row__url">
+                            <Highlight
+                              text={row.record.url}
+                              positions={row.positions}
+                              offset={row.record.titleLen}
+                            />
+                          </div>
                         </>
                       ) : (
-                        <div className="hf-row__title">{row.url}</div>
+                        <div className="hf-row__title">
+                          <Highlight
+                            text={row.record.url}
+                            positions={row.positions}
+                            offset={row.record.titleLen}
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
                 ))}
                 {records.length === 0 && <div className="hf-empty">No history indexed yet.</div>}
+                {records.length > 0 && rows.length === 0 && (
+                  <div className="hf-empty">No results.</div>
+                )}
               </>
             )}
           </div>
@@ -150,4 +195,5 @@ export default function App() {
       </div>
     </div>
   )
+
 }
