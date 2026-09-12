@@ -1,29 +1,38 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MSG } from '../constants'
+import { buildSearchRecords, landingList } from '../indexmodel'
+import type { IndexResponse, SearchRecord } from '../types'
+import { Favicon } from './favicon'
 
+/**
+ * The palette. Index model: one GET_INDEX per open, then everything
+ * lives in RAM — landing list on empty query (search arrives next).
+ * Row rendering: favicon + title/URL, with the empty-title fallback
+ * (URL becomes primary, no secondary line — a row is never empty).
+ */
 export default function App() {
   const inputRef = useRef<HTMLInputElement>(null)
-  // Deployment mode: 'mode=tab' = same-tab takeover (option C) — the
-  // palette page IS the tab, no parent iframe exists.
+  const [records, setRecords] = useState<SearchRecord[] | null>(null)
+  const [rows, setRows] = useState<SearchRecord[]>([])
+  // Deployment mode: 'mode=tab' = takeover — the palette page IS the tab.
   const TAKEOVER = new URLSearchParams(location.search).get('mode') === 'tab'
 
   useEffect(() => {
     let cancelled = false
     chrome.runtime
       .sendMessage({ type: MSG.GET_INDEX })
-      .then((res) => {
+      .then((res: IndexResponse | undefined) => {
         if (cancelled) {
           return
         }
-        // Success IS the round-trip proof itself — an extension-origin
-        // iframe reaching the SW through a message port is the whole
-        // storage-partitioning question answered. Logging every index
-        // load would be console noise; the search commits use the
-        // record array directly.
-        void res
+        const built = buildSearchRecords(res?.records ?? [])
+        // Search arrives in the next commit; empty query = landing list.
+        setRecords(built)
+        setRows(landingList(built, Date.now()))
       })
       .catch((err) => {
         console.error('[histfzf] GET_INDEX failed', err)
+        setRecords([])
       })
     return () => {
       cancelled = true
@@ -43,16 +52,31 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    // TAKEOVER focus: tabs.create navigations deliver focus to the
-    // page like ordinary link navigations, but claim it directly as
-    // well (the tabs.create focus race) and whenever the window
-    // regains focus.
+    // SHOW → focus the input and select its text (mount + every re-show
+    // after toggle). A forged SHOW is harmless (focus only).
+    if (TAKEOVER) {
+      return
+    }
+    const onMessage = (event: MessageEvent) => {
+      if (event.source !== window.parent) {
+        return
+      }
+      if (event.data?.type === MSG.SHOW) {
+        inputRef.current?.focus()
+        inputRef.current?.select()
+      }
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [])
+
+  useEffect(() => {
+    // TAKEOVER focus: tabs-create navigations deliver focus naturally —
+    // claim it (immediate + next tick) and whenever the window regains it.
     if (!TAKEOVER) {
       return
     }
-    const focusInput = () => {
-      inputRef.current?.focus()
-    }
+    const focusInput = () => inputRef.current?.focus()
     const timers = [0, 60].map((delay) => setTimeout(focusInput, delay))
     window.addEventListener('focus', focusInput)
     return () => {
@@ -61,33 +85,6 @@ export default function App() {
     }
   }, [])
 
-  useEffect(() => {
-    // SHOW → the palette just became visible (mount OR re-show after
-    // toggle). Focus the input and select its text so reopening is a
-    // "type over" gesture. The message comes from our own isolated
-    // content script (parent side); a forged SHOW from a hostile page
-    // is harmless (focus only), so no strict origin dance needed.
-    const onMessage = (event: MessageEvent) => {
-      if (event.source !== window.parent) {
-        return
-      }
-      if (event.data?.type === MSG.SHOW) {
-        const input = inputRef.current
-        if (!input) {
-          return
-        }
-        input.focus()
-        input.select()
-      }
-    }
-    window.addEventListener('message', onMessage)
-    return () => window.removeEventListener('message', onMessage)
-  }, [])
-
-  // Close means different things per deployment mode:
-  // - iframe (normal pages): relay CLOSE to the content script
-  // - mode=tab (same-tab takeover, option C): ask the SW to restore
-  //   the page this tab was before the palette took it over
   function close() {
     if (TAKEOVER) {
       chrome.runtime
@@ -120,6 +117,29 @@ export default function App() {
               autoFocus
               placeholder="Search history…"
             />
+          </div>
+          <div className="hf-rows">
+            {records === null ? null : (
+              <>
+                {rows.length > 0 && <div className="hf-section">FREQUENT</div>}
+                {rows.map((row) => (
+                  <div className="hf-row" key={row.url}>
+                    <Favicon rawUrl={row.rawUrl} />
+                    <div className="hf-rowtext">
+                      {row.title ? (
+                        <>
+                          <div className="hf-row__title">{row.title}</div>
+                          <div className="hf-row__url">{row.url}</div>
+                        </>
+                      ) : (
+                        <div className="hf-row__title">{row.url}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {records.length === 0 && <div className="hf-empty">No history indexed yet.</div>}
+              </>
+            )}
           </div>
           <div className="hf-footer">
             <span>

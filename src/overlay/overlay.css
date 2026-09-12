@@ -150,3 +150,111 @@ body {
   color: rgba(235, 235, 245, 0.7);
   font-family: inherit;
 }
+
+/* -- Rows (landing list) -------------------------------------------------- */
+
+.hf-rows {
+  min-height: 176px; /* exactly 4×44px — 1 result never resizes the panel */
+  max-height: 52vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.hf-rows::-webkit-scrollbar {
+  width: 8px;
+}
+
+.hf-rows::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.hf-rows::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hf-section {
+  padding: 8px 16px 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(235, 235, 245, 0.4);
+}
+
+.hf-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 0;
+  box-sizing: border-box;
+  transition: background 0.08s ease;
+}
+
+.hf-row:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.hf-row__favicon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.hf-row__favicon--globe {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(235, 235, 245, 0.4);
+}
+
+.hf-row__favicon--globe svg {
+  width: 18px;
+  height: 18px;
+}
+
+.hf-rowtext {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+}
+
+.hf-row__title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: rgba(235, 235, 245, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hf-row__url {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: rgba(235, 235, 245, 0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hf-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  color: rgba(235, 235, 245, 0.4);
+}
